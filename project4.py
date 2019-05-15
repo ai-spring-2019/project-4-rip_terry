@@ -4,7 +4,7 @@ PLEASE DOCUMENT HERE
 Usage: python3 project3.py DATASET.csv
 """
 
-import csv, sys, random, math
+import csv, sys, random, math, itertools
 
 def read_data(filename, delimiter=",", has_header=True):
 	"""Reads datafile using given delimiter. Returns a header and a list of
@@ -102,11 +102,18 @@ class NeuralNetwork:
 	def back_propagation_learning(self, training):
 		"""the neural net learns using the back propogation algorithm from the book"""
 
+		# print(len(training))
+
 		errors = [[1000]]
 		t = 0
 
+		#randomize the weights
+		for node in self.network.keys():
+			for i in range(len(self.network[node])):
+				self.network[node][i] = random.uniform(-1, 1)
+
 		#while abs(sum([sum(e) for e in errors])) >= .0001 * len(training):
-		for _ in range(2000):
+		for _ in range(2):
 			errors = []
 
 			for x, y in training:
@@ -179,6 +186,7 @@ class NeuralNetwork:
 			#for each node in the layer
 			for j in range(self.structure[i]):
 				#for the input nodes
+
 				inputs = [values[0] * self.network[0][j + sum(self.structure[1:i])]]
 				#for each nonDummy input to the node
 				for n in range(self.structure[i - 1]):
@@ -193,7 +201,9 @@ def crossValidation(nn, data):
 
 	n = 5
 
-	subsets = [[]] * n
+	subsets = []
+	for _ in range(n):
+		subsets.append([])
 
 	#split the data into n subsets
 	for i in range(len(data)):
@@ -206,7 +216,7 @@ def crossValidation(nn, data):
 		training = []
 		for subset in subsets:
 			if subset != subsets[i]:
-				training += subset[0]
+				training += subset
 
 		#train and test
 		nn.back_propagation_learning(training)
@@ -219,16 +229,21 @@ def crossValidation(nn, data):
 
 	return (sum(errors) / len(errors))
 
+def createNets(x, y, layerNumMin, layerNumMax, minNodes, maxNodes, step=1):
+	"""returns a list of every neural net within the range of layers each with nodes in the range of nodes"""
 
+	#create hidden layer structures 
+	structures = []
+	for i in range(layerNumMin, layerNumMax):
+		structures.append(itertools.product(range(minNodes, maxNodes, step), repeat = i))
 
+	#create nn's
+	networks = []
+	for struct in structures:
+		for s in struct:
+			networks.append(NeuralNetwork([x] + list(s) + [y]))
 
-# def testNets(x, y, layerNumMin, layerNumMax, minNodes, maxNodes, step=1):
-# 	"""tests out every neural net within the range of layers each with nodes in the range of nodes"""
-
-# 	structures = []
-# 	for layers in range(layerNumMin, layerNumMax):
-# 		for layer in range(layers):
-# 			for i in range(minNodes, maxNodes, step):
+	return networks
 
 
 
@@ -249,20 +264,32 @@ def main():
 	### I expect the running of your program will work something like this;
 	### this is not mandatory and you could have something else below entirely.
 
-	nn = NeuralNetwork([len(training[0][0]) - 1, 10, len(training[0][1])])
-	print(crossValidation(nn, training))
-	quit()
+	networks = createNets(len(training[0][0])-1, len(training[0][1]), 1, 4, 5, 105, step=10)
+
+	test = training[:len(training) // 10]
+	validation = training[len(training) // 10:]
+
+	errors = []
+	for nn in networks:
+		errors.append((crossValidation(nn, validation), nn.structure, nn))
+
+	print(errors)
+
+	min(errors)[2].back_propagation_learning(validation)
+
+	print(sum([abs(min(errors)[2].estimate(test[i][0])[n] - test[i][1][n]) for i in range(len(test)) for n in range(len(test[0][1]))]) / (len(test) * len(test[0][1])))
 
 
-	for j in range(10, 15):
-		nn = NeuralNetwork([3, j, 3])
-		nn.back_propagation_learning(training)
 
-		errors = []
-		for i in range(len(training)):
-			errors.append(sum([abs(nn.estimate(training[i][0])[n] - training[i][1][n]) for n in range(len(training[i][1]))]))
+	# for j in range(10, 15):
+	# 	nn = NeuralNetwork([3, j, 3])
+	# 	nn.back_propagation_learning(training)
 
-		print(j, sum(errors)/(len(errors) * len(training[0][1])))
+	# 	errors = []
+	# 	for i in range(len(training)):
+	# 		errors.append(sum([abs(nn.estimate(training[i][0])[n] - training[i][1][n]) for n in range(len(training[i][1]))]))
+
+	# 	print(j, sum(errors)/(len(errors) * len(training[0][1])))
 
 
 
