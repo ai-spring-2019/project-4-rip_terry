@@ -1,7 +1,11 @@
 """
-PLEASE DOCUMENT HERE
+Geo Engel
+Project 4
 
 Usage: python3 project3.py DATASET.csv
+
+you can change the number of epochs in back_prop method with the first for loop (z)
+you can change the structure of your nn by changing the parameters of createNets, first inclusive second exclusive
 """
 
 import csv, sys, random, math, itertools
@@ -102,8 +106,6 @@ class NeuralNetwork:
 	def back_propagation_learning(self, training):
 		"""the neural net learns using the back propogation algorithm from the book"""
 
-		# print(len(training))
-
 		errors = [[1000]]
 		t = 0
 
@@ -113,7 +115,7 @@ class NeuralNetwork:
 				self.network[node][i] = random.uniform(-1, 1)
 
 		#while abs(sum([sum(e) for e in errors])) >= .0001 * len(training):
-		for _ in range(2):
+		for z in range(1000):
 			errors = []
 
 			for x, y in training:
@@ -264,7 +266,7 @@ def main():
 	### I expect the running of your program will work something like this;
 	### this is not mandatory and you could have something else below entirely.
 
-	networks = createNets(len(training[0][0])-1, len(training[0][1]), 1, 4, 5, 105, step=10)
+	networks = createNets(len(training[0][0])-1, len(training[0][1]), 1, 2, 10, 81, step=10)
 
 	test = training[:len(training) // 10]
 	validation = training[len(training) // 10:]
@@ -272,6 +274,7 @@ def main():
 	errors = []
 	for nn in networks:
 		errors.append((crossValidation(nn, validation), nn.structure, nn))
+		print(errors)
 
 	print(errors)
 
